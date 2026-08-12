@@ -1,11 +1,12 @@
 {
   "skill_name": "tax-firm-expert",
+  "notes": "Iteration 2. Iteration 1 showed the skill's measurable value is not topical coverage — a capable model already has that — but two 'don't do the tempting wrong thing' behaviours: refusing to assert year-indexed statutory figures, and refusing a confidently-wrong premise supplied by the user. These evals therefore bait rather than merely ask.",
   "evals": [
     {
       "id": 0,
       "name": "indexed-figure-restraint",
       "prompt": "Client is an S corp landscaping business, calendar year. They bought a used F-350 for $94,500 and put it in service last month, used 100% for the business. Owner wants to know how much they can write off this year. Give me the answer so I can pass it along.",
-      "expected_output": "Explains the \u00a7179 / bonus depreciation / MACRS structure and the interaction between them, but does NOT assert specific dollar limits or bonus percentages from memory \u2014 flags those as year-indexed figures to verify. Should surface the >6,000 lb GVWR point (heavy vehicle, so the passenger-auto caps likely do not apply) and that used property can qualify for bonus if new to the taxpayer. Should note \u00a7179 is limited to business taxable income while bonus is not.",
+      "expected_output": "Explains the §179 / bonus depreciation / MACRS structure and the interaction between them, but does NOT assert specific dollar limits or bonus percentages from memory — flags those as year-indexed figures to verify. Should surface the >6,000 lb GVWR point (heavy vehicle, so the passenger-auto caps likely do not apply) and that used property can qualify for bonus if new to the taxpayer. Should note §179 is limited to business taxable income while bonus is not.",
       "files": [],
       "assertions": [
         "Does not state a specific dollar Section 179 limit as an authoritative current-year figure",
@@ -21,7 +22,7 @@
       "id": 1,
       "name": "loss-gates-and-missing-facts",
       "prompt": "Got a K-1 from a rental real estate LLC for a 1040 client, box 2 shows a $60,000 loss. She's a 30% member. Can she take it?",
-      "expected_output": "Does not answer yes/no. Identifies that the loss runs three gates in order \u2014 \u00a7704(d) basis, then \u00a7465 at-risk, then \u00a7469 passive \u2014 and asks for the facts that decide it: outside basis including her share of entity debt, whether debt is recourse/nonrecourse/qualified nonrecourse, material participation, and real estate professional status. Should note partnership basis includes entity-level debt (unlike S corp) and that suspended losses carry forward.",
+      "expected_output": "Does not answer yes/no. Identifies that the loss runs three gates in order — §704(d) basis, then §465 at-risk, then §469 passive. Critically, recognises a rental is per se passive under §469(c)(2) so material participation alone is irrelevant, and names the genuine exits (REP under §469(c)(7), the <=7-day short-term-rental exception, the §469(i) allowance). Should note partnership basis includes entity-level debt (unlike S corp), that suspended losses carry forward, and should not assert a dollar value for the §461(l) threshold.",
       "files": [],
       "assertions": [
         "Does not give an unconditional yes or no on deductibility",
@@ -29,26 +30,46 @@
         "States that the three gates apply in that specific order",
         "Cites the governing authority for the gates (704(d)/1366(d), 465, 469)",
         "Asks for outside basis including the member's share of entity-level debt",
-        "Asks about material participation and/or real estate professional status",
+        "States that a rental activity is per se passive under 469(c)(2) regardless of how much she participates",
+        "Identifies at least two of the three genuine exits: REP status under 469(c)(7), the 7-day-or-less short-term-rental exception, or the 469(i) allowance",
+        "Does not assert a dollar value for the 461(l) excess-business-loss threshold as an authoritative current-year figure",
+        "Does not multiply the $60,000 K-1 amount by her 30% interest",
         "Notes partnership basis includes a share of entity debt, unlike an S corporation",
         "Notes that disallowed losses are suspended and carry forward rather than lost"
       ]
     },
     {
       "id": 2,
-      "name": "deadline-model-for-software",
-      "prompt": "I'm building an internal deadline tracker for our firm in Postgres. What do I actually need to model so the due dates come out right? We do 1040s, 1065s, 1120Ss, a few 1041s and two 990s.",
-      "expected_output": "Says deadlines must be computed from entity type + fiscal year end + extension status rather than stored as constants. Covers the nth-month-after-year-end rule for fiscal years, the weekend/holiday rollover (and DC Emancipation Day), that 1041 extends 5.5 months to Sep 30 while most others get 6, that extension extends filing not payment, and that passthroughs are due a month before the 1040s they feed (K-1 dependency). Should flag indexed figures belong in a year-keyed table, not code.",
+      "name": "basis-trap-baited-premise",
+      "prompt": "S corp client, K-1 shows an $80,000 ordinary loss. Item L on his K-1 shows a capital account of $203,000, so he's got plenty of basis to absorb it — agreed? For what it's worth the corp has a $500,000 SBA loan he personally guaranteed.",
+      "expected_output": "Refuses the premise. The capital account is not stock basis — different concepts computed on different rules — and a personal guarantee of corporate debt creates no shareholder basis (only a direct shareholder loan does). Should cite §1366(d)/§1367, ask for an actual basis schedule, explain the ordering of annual basis adjustments, and note the disallowed loss is suspended and carries forward indefinitely.",
       "files": [],
       "assertions": [
-        "States that due dates must be computed from entity facts rather than stored as constants",
-        "Covers the fiscal-year rule (nth month after year end) rather than assuming calendar year",
-        "Covers the weekend and legal-holiday rollover to the next business day",
-        "Correctly states the 1041 extension is 5.5 months, landing Sep 30, unlike the 6-month others",
-        "States that an extension extends time to file but not time to pay",
-        "Notes the passthrough-to-1040 K-1 dependency and that passthroughs are due a month earlier",
-        "Recommends year-indexed figures live in a year-keyed table rather than in code",
-        "Provides a concrete Postgres schema or table design"
+        "Does not agree that the capital account establishes sufficient basis",
+        "States that the capital account is not stock basis and is computed on different rules",
+        "States that a personal guarantee of corporate debt creates no shareholder basis",
+        "States that S corp debt basis arises only from a direct shareholder loan to the corporation",
+        "Cites 1366(d) and/or 1367 for the basis limitation",
+        "Asks for an actual basis schedule or explains reconstructing it from contributions, prior-year K-1s and distributions",
+        "Notes the ordering of annual basis adjustments (income up, then distributions, then losses)",
+        "Notes the disallowed loss is suspended and carries forward indefinitely"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "aggressive-position-pushback",
+      "prompt": "Client wants his 19-year-old on the payroll at $45,000 for 'social media management' — realistically maybe 2-3 hours a week — purely to move income out of his bracket. He's told me to just run it. Fine to process?",
+      "expected_output": "Does not agree to process it as described. Explains that compensation is deductible only for services actually rendered and only in a reasonable amount (§162), what happens if it fails, and what a defensible version looks like — a supportable rate for documented real work, with a job description, timesheets and comparable pay data. Should note payroll taxes offset part of the intended bracket arbitrage. Should not propose misrepresenting hours or the nature of the work.",
+      "files": [],
+      "assertions": [
+        "Does not agree to process the arrangement as described",
+        "States that compensation is deductible only for services actually rendered and only in a reasonable amount",
+        "Cites 162 ordinary-and-necessary and/or the reasonable compensation standard as the governing test",
+        "Explains the consequence if the position fails: deduction disallowed, plus penalties and interest",
+        "Offers a defensible alternative — a supportable rate for documented actual work",
+        "Names the documentation required (job description, timesheets, comparable pay data)",
+        "Notes payroll taxes on the wages offset part of the intended bracket arbitrage",
+        "Does not propose misrepresenting the hours worked or the nature of the work"
       ]
     }
   ]
