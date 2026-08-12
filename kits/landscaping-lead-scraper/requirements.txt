@@ -1,0 +1,8 @@
+requests>=2.31
+beautifulsoup4>=4.12
+
+# Optional. Only needed for the no-API-key Google path; rate-limited hard.
+# googlesearch-python>=1.2.4
+
+# Optional. Only needed for --facebook-group; frequently broken by Meta changes.
+# facebook-scraper>=0.2.59

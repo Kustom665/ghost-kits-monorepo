@@ -1,5 +1,14 @@
 # Ghost Kits Monorepo
 
+Self-contained kits, each in its own directory.
+
+| kit | what it does |
+| --- | --- |
+| [`landscaping-lead-scraper`](kits/landscaping-lead-scraper) | Landscaping lead machine: scrapes Craigslist + Google Places into a CSV call list, and serves a phone lead-CRM (tap-to-dial, follow-ups, real win-rate stats). |
+| [TaxFlow Radar](#taxflow-radar) | Busy-season operations dashboard for tax firms: finds the pipeline constraint, ranks document chasing, and triages extensions. Lives in `apps/web` + `packages/core`. |
+
+---
+
 ## TaxFlow Radar
 
 A busy-season operations tool for accounting and tax firms. It answers one

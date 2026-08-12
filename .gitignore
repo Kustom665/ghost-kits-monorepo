@@ -2,10 +2,25 @@
 node_modules
 .env
 package-lock.json
-.next
-.data
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+venv/
+.venv/
+
+# Scraper output and credentials — never commit these
+*.csv
+cookies.txt
+
+# Databases
 *.db
 *.db-shm
 *.db-wal
+
+# Next.js / TypeScript
+.next
+.data
 next-env.d.ts
 tsconfig.tsbuildinfo
