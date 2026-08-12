@@ -62,6 +62,7 @@ class TestAuth:
         assert resp.status_code == 200
         assert "tel:" in resp.text  # tap-to-dial wiring present
         assert "Add to Home Screen" in resp.text or "apple-mobile-web-app" in resp.text
+        assert "@media (min-width: 900px)" in resp.text  # desktop layout present
 
     def test_api_requires_token(self, client):
         assert client.get("/api/leads").status_code == 401
