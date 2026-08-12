@@ -239,7 +239,13 @@ function toast(msg) {
   const el = $("#toast"); el.textContent = msg; el.classList.add("show");
   clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove("show"), 2200);
 }
-const today = () => new Date().toISOString().slice(0, 10);
+// Local calendar date, NOT toISOString(): UTC serialization is already
+// "tomorrow" during the evening in timezones behind UTC, which would mark
+// follow-ups due a day early.
+const today = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
 const money = (n) => "$" + Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 });
 
 /* ------------------------------------------------ outreach scripts */

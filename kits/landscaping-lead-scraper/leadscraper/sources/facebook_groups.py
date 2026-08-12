@@ -27,6 +27,22 @@ def _matches(text: str, keywords) -> bool:
     return any(word in lowered for word in keywords)
 
 
+def _post_url(post: dict, group_id) -> str:
+    """A URL unique to this post, or "" if we can't build one.
+
+    Never fall back to the bare group URL: dedupe prefers any non-empty URL,
+    so a shared fallback would collapse every post in the group into one
+    lead. An empty URL makes dedupe key on source+title, which varies per
+    post."""
+    url = post.get("post_url") or ""
+    if url:
+        return url
+    post_id = post.get("post_id")
+    if post_id:
+        return f"https://www.facebook.com/groups/{group_id}/posts/{post_id}"
+    return ""
+
+
 def scrape(
     group_ids,
     cookies_file: str = "",
@@ -71,7 +87,7 @@ def scrape(
                         title=" ".join(title.split()),
                         # post_url is already absolute; prefixing the domain
                         # again produced unusable links in earlier versions.
-                        url=post.get("post_url") or f"https://www.facebook.com/groups/{group_id}",
+                        url=_post_url(post, group_id),
                         phone=first_phone(text),
                         notes=f"group {group_id}",
                     )

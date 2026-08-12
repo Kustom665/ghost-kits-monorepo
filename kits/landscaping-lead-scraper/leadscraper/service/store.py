@@ -71,7 +71,10 @@ def _now() -> str:
 
 
 def _today() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    # Server-local date, not UTC: the server runs in the user's home, so its
+    # local calendar day matches theirs. UTC would flip follow-ups to "due"
+    # during the evening in timezones behind UTC.
+    return datetime.now().strftime("%Y-%m-%d")
 
 
 class Store:
