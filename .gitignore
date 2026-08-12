@@ -13,3 +13,4 @@ venv/
 # Scraper output and credentials — never commit these
 *.csv
 cookies.txt
+*.db

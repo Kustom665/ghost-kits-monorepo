@@ -1,12 +1,26 @@
 # Landscaping Lead Scraper
 
-Collects landscaping/lawn-care leads into a CSV you can work down a phone list with.
+Collects landscaping/lawn-care leads into a CSV you can work down a phone list
+with — or serves them as a **phone lead CRM** you tap-to-dial from
+(see [SERVICE.md](SERVICE.md)).
 
 Three sources: **Craigslist** (people asking for the work), **Google Places**
 (property managers and HOAs to cold call), and **Facebook groups** (opt-in, see
 the caveats below).
 
-## Quick start
+## Phone app quick start
+
+```bash
+cd kits/landscaping-lead-scraper
+pip install -r requirements.txt -r requirements-service.txt
+python -m leadscraper.service
+```
+
+Open the printed link on your phone, Add to Home Screen, done: Today view,
+tap-to-dial, status pipeline, follow-ups, per-source win-rate stats. Full
+guide in [SERVICE.md](SERVICE.md).
+
+## CLI quick start
 
 ```bash
 cd kits/landscaping-lead-scraper
@@ -127,9 +141,35 @@ delay reduces the chance of an IP block but does not make the scraping
 authorized. The Google Places path is a documented API and is the one source
 here you're straightforwardly permitted to use at volume.
 
-## Expectations
+## Working the list
 
-The tool finds and formats leads. It does not qualify them — a Craigslist
-"wanted" post may be weeks stale, and a property management company may already
-be under contract. Treat the CSV as a call list to work through, and track your
-own conversion rate from real calls rather than assuming a number.
+What to actually say, per source. These same scripts are one tap-to-copy away
+in the phone app's lead detail view.
+
+**Craigslist "wanted" posts** — reply fast with a price and immediate
+availability; these posters want the chore gone, not a consultation:
+
+> Hi! I do lawn & landscaping work here in town and have an opening this week.
+> For a yard like yours I'd estimate $XX per visit. I'm insured, reliable, and
+> can start tomorrow — happy to swing by for a free 5-minute quote.
+
+**Property managers / HOAs (Google leads)** — they buy reliability at volume,
+not one-off mows. Ask for the person who owns the vendor list:
+
+> Hi, this is [Name] with [Company] — a local lawn & landscape crew. We work
+> with property managers on multi-property routes: one invoice, photo
+> check-ins after every visit, and a volume rate when we handle 5+ properties.
+> Who handles your landscaping vendor list?
+
+**Facebook group posts** — first useful reply usually wins. Comment publicly
+(social proof) *and* DM, within minutes if you can:
+
+> Hey! Local landscaper here — I can take care of this for you. Free quote,
+> can come by today or tomorrow. Just sent you a DM.
+
+Track what actually converts in the app's Stats tab (or your own spreadsheet
+via the CSV): mark leads won with a job value and your real per-source win
+rate builds itself. Don't plan revenue around anyone's quoted close rates —
+including numbers you've seen attached to this kind of tool. A "wanted" post
+may be weeks stale and a property manager may be mid-contract; the scraper
+finds and formats leads, it doesn't qualify them.
