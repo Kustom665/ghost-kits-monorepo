@@ -2,3 +2,14 @@
 node_modules
 .env
 package-lock.json
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+venv/
+.venv/
+
+# Scraper output and credentials — never commit these
+*.csv
+cookies.txt
