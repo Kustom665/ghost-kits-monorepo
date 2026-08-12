@@ -83,6 +83,9 @@ def scrape(
         if len(result.leads) >= max_results:
             break
 
-    if errors and not result.leads:
-        result.error = "; ".join(errors) + " (expired cookies or a Meta markup change are the usual causes)"
+    if errors:
+        if result.leads:
+            result.warnings = errors
+        else:
+            result.error = "; ".join(errors) + " (expired cookies or a Meta markup change are the usual causes)"
     return result

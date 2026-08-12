@@ -8,16 +8,12 @@ import logging
 import sys
 
 from .export import write_csv
-from .extract import dedupe
-from .http import build_session
-from .sources import craigslist, facebook_groups, google_places
+from .pipeline import SearchRequest, normalize_city, run_search
+from .sources import craigslist
+
+__all__ = ["build_parser", "main", "normalize_city", "run"]
 
 log = logging.getLogger("leadscraper")
-
-
-def normalize_city(city: str) -> str:
-    """Craigslist subdomains have no spaces or punctuation: 'San Antonio' -> 'sanantonio'."""
-    return "".join(ch for ch in city.lower() if ch.isalnum())
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -60,66 +56,47 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _request_from_args(args) -> SearchRequest:
+    return SearchRequest(
+        city=args.city,
+        state=args.state,
+        keywords=args.keywords,
+        categories=tuple(c.strip() for c in args.categories.split(",") if c.strip()),
+        max_per_source=args.max_per_source,
+        places_key=args.places_key,
+        facebook_groups=tuple(args.facebook_group),
+        facebook_cookies=args.facebook_cookies,
+        facebook_pages=args.facebook_pages,
+        skip_craigslist=args.skip_craigslist,
+        skip_google=args.skip_google,
+    )
+
+
 def run(args) -> int:
-    session = build_session()
-    city = normalize_city(args.city)
-    all_leads = []
-    statuses = []
-
-    if not args.skip_craigslist:
-        log.info("Craigslist: searching %s ...", city)
-        result = craigslist.scrape(
-            session,
-            city=city,
-            keywords=args.keywords,
-            categories=[c.strip() for c in args.categories.split(",") if c.strip()],
-            max_results=args.max_per_source,
-        )
-        all_leads.extend(result.leads)
-        statuses.append(result)
-
-    if not args.skip_google:
-        log.info("Google: looking for property managers and HOAs ...")
-        result = google_places.scrape(
-            session,
-            city=args.city,
-            state=args.state,
-            api_key=args.places_key,
-            max_results=args.max_per_source,
-        )
-        all_leads.extend(result.leads)
-        statuses.append(result)
-
-    if args.facebook_group:
-        log.info("Facebook: reading %d group(s) ...", len(args.facebook_group))
-        result = facebook_groups.scrape(
-            group_ids=args.facebook_group,
-            cookies_file=args.facebook_cookies,
-            pages=args.facebook_pages,
-            max_results=args.max_per_source,
-        )
-        all_leads.extend(result.leads)
-        statuses.append(result)
-
-    unique = dedupe(all_leads)
+    outcome = run_search(
+        _request_from_args(args),
+        on_source=lambda r: log.info("%s: %d leads", r.name, len(r.leads)),
+    )
 
     print("\nSource summary")
-    for result in statuses:
+    for result in outcome.results:
         if result.ok:
             print(f"  {result.name:<24} {len(result.leads):>4} leads")
         else:
             print(f"  {result.name:<24}    0 leads — {result.error}")
-    if not args.facebook_group:
-        print("  Facebook                  skipped (pass --facebook-group to enable)")
+        for warning in result.warnings:
+            print(f"    ⚠ {warning}")
+    for note in outcome.skipped:
+        print(f"  {note}")
 
-    if not unique:
+    if not outcome.leads:
         print("\nNo leads found. Nothing written.")
         return 1
 
-    written = write_csv(unique, args.output, append=args.append)
-    with_phone = sum(1 for lead in unique if lead.phone)
-    if args.append and written < len(unique):
-        print(f"\nWrote {written} new leads to {args.output} ({len(unique) - written} already present).")
+    written = write_csv(outcome.leads, args.output, append=args.append)
+    with_phone = sum(1 for lead in outcome.leads if lead.phone)
+    if args.append and written < len(outcome.leads):
+        print(f"\nWrote {written} new leads to {args.output} ({len(outcome.leads) - written} already present).")
     else:
         print(f"\nWrote {written} leads to {args.output}.")
     print(f"{with_phone} of them have a phone number; the rest need a reply form or a site visit.")

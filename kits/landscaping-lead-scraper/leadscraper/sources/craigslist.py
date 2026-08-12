@@ -112,6 +112,9 @@ def scrape(
                 polite_pause()
 
     result.leads = result.leads[:max_results]
-    if errors and not result.leads:
-        result.error = "; ".join(errors)
+    if errors:
+        if result.leads:
+            result.warnings = errors
+        else:
+            result.error = "; ".join(errors)
     return result

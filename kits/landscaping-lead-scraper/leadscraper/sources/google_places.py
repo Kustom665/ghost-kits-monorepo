@@ -80,7 +80,7 @@ def scrape(
     queries = queries or default_queries(city, state)
 
     if not api_key:
-        return search_fallback(city, state, queries=queries, max_results=max_results)
+        return search_fallback(city, state, queries=queries, max_results=max_results, pause=pause)
 
     errors = []
     for query in queries:
@@ -116,12 +116,15 @@ def scrape(
                 polite_pause(1.0, 2.0)
 
     result.leads = result.leads[:max_results]
-    if errors and not result.leads:
-        result.error = "; ".join(errors)
+    if errors:
+        if result.leads:
+            result.warnings = errors
+        else:
+            result.error = "; ".join(errors)
     return result
 
 
-def search_fallback(city: str, state: str, queries=None, max_results: int = 45) -> SourceResult:
+def search_fallback(city: str, state: str, queries=None, max_results: int = 45, pause: bool = True) -> SourceResult:
     """No-API-key path: organic search results only, no phone numbers.
 
     Depends on the optional `googlesearch-python` package and is rate-limited
@@ -161,8 +164,12 @@ def search_fallback(city: str, state: str, queries=None, max_results: int = 45) 
             errors.append(f"{query}: {exc}")
         if len(result.leads) >= max_results:
             break
-        polite_pause(1.0, 2.0)
+        if pause:
+            polite_pause(1.0, 2.0)
 
-    if errors and not result.leads:
-        result.error = "; ".join(errors)
+    if errors:
+        if result.leads:
+            result.warnings = errors
+        else:
+            result.error = "; ".join(errors)
     return result
