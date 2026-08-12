@@ -120,3 +120,12 @@ class TestScrape:
         session = FakeSession([FakeResponse(FEED), FakeResponse(FEED)])
         craigslist.scrape(session, city="austin", categories=["wan", "hss"], pause=False)
         assert [call[0].rsplit("/", 1)[-1] for call in session.calls] == ["wan", "hss"]
+
+    def test_partial_failure_becomes_warning_not_silence(self):
+        # One dead board plus one good board: previously the 404 vanished.
+        session = FakeSession([FakeResponse("", status_code=404), FakeResponse(FEED)])
+        result = craigslist.scrape(session, city="austin", categories=["hss", "wan"], pause=False)
+        assert result.ok is True
+        assert len(result.leads) == 2
+        assert len(result.warnings) == 1
+        assert "hss" in result.warnings[0]
