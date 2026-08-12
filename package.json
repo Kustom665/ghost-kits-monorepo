@@ -1,0 +1,19 @@
+{
+  "name": "ghost-kits-monorepo",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @taxflow/web",
+    "build": "npm run build --workspace @taxflow/web",
+    "start": "npm run start --workspace @taxflow/web",
+    "seed": "npm run seed --workspace @taxflow/web",
+    "test": "npm test --workspace @taxflow/core",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  }
+}
