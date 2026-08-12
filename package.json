@@ -10,7 +10,11 @@
     "build": "npm run build --workspace @taxflow/web",
     "start": "npm run start --workspace @taxflow/web",
     "seed": "npm run seed --workspace @taxflow/web",
-    "test": "npm test --workspace @taxflow/core",
+    "dev:crm": "npm run dev --workspace @agency/crm",
+    "build:crm": "npm run build --workspace @agency/crm",
+    "start:crm": "npm run start --workspace @agency/crm",
+    "seed:crm": "npm run seed --workspace @agency/crm",
+    "test": "npm test --workspace @taxflow/core && npm test --workspace @agency/core",
     "typecheck": "npm run typecheck --workspaces --if-present"
   },
   "engines": {

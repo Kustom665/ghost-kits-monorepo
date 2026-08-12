@@ -1,5 +1,15 @@
 # Ghost Kits Monorepo
 
+Two operations tools for service businesses, sharing a shape: a framework-free
+domain package with the thinking in it, and a Next.js app that renders it.
+
+| | What it answers | Run it |
+| --- | --- | --- |
+| [**TaxFlow Radar**](#taxflow-radar) | What is gating our busy season today? | `npm run dev` → :3000 |
+| [**CentralFlow**](#centralflow) | Which client is waiting on us, and what is it costing? | `npm run dev:crm` → :3001 |
+
+---
+
 ## TaxFlow Radar
 
 A busy-season operations tool for accounting and tax firms. It answers one
@@ -113,3 +123,121 @@ The reminder composer drafts and logs the touch but does not send — connecting
 it to a mail provider is the one remaining step to make the chase loop
 fully automatic. Authentication and multi-tenancy are also out of scope for this
 build.
+
+---
+
+## CentralFlow
+
+An agency CRM built around the shared client inbox, because that is where
+agencies actually lose accounts. Nobody churns over a missing pipeline board;
+they churn because they wrote in on Thursday and heard back on Tuesday.
+
+```bash
+npm install
+npm run seed:crm   # generates a realistic 15-account demo agency
+npm run dev:crm    # http://localhost:3001
+```
+
+Requires Node 22.5+ (uses the built-in `node:sqlite`, so there are no native
+dependencies to compile). It runs alongside TaxFlow on a separate port and a
+separate database file.
+
+### The idea
+
+Most CRMs organise around the deal. For a client-services business that is the
+smaller half of the job: the revenue already signed is worth more than the
+revenue being chased, and it is defended one reply at a time. So the inbox *is*
+the CRM here — accounts, deals and health all hang off the conversation, and
+the home screen is a queue that ranks itself.
+
+| Failure | What actually goes wrong | Where it surfaces |
+| --- | --- | --- |
+| **Slow first reply** | A thread lands, everyone assumes someone else has it, and the client waits two days for an acknowledgement | Inbox, ranked by response debt |
+| **Unowned threads** | Shared inboxes have no owner by default, so the cheapest fix in the shop is also the least visible | Inbox → Unassigned, Pulse |
+| **Silent accounts** | A flagship goes quiet for three weeks and nobody notices until the renewal call | Accounts → health |
+| **One person underwater** | A shop-wide breach count is almost always one or two people carrying it | Pulse → who is carrying the queue |
+| **Deals going cold** | A proposal sits three weeks past the point where this shop's deals normally move | Pipeline → sitting too long |
+
+### What makes the numbers trustworthy
+
+Every timing figure is derived from the `messages` table rather than stored on
+the conversation, so the inbox cannot drift away from the actual correspondence.
+
+- **Working hours, always.** A message that lands at 6pm Friday and is answered
+  at 9:30 Monday was answered in half an hour, not sixty-three. Wall-clock SLA
+  dashboards produce exactly one behaviour — people stop trusting them.
+- **Only threads we owe.** A thread waiting on the client accrues nothing.
+  Counting it as slow is how a response dashboard stops meaning anything.
+- **Two budgets, not one.** First reply and follow-up are measured separately,
+  because the first one is what clients judge and what converts an inbound
+  lead. Prospects get the tightest budget in the shop — one hour — since they
+  have no relationship to spend down while they wait.
+- **First response means the first one.** It is stored per thread, so a
+  twelve-message conversation is still scored on how long the client waited to
+  hear from anyone at all, not on the most recent reply.
+- **Measured, not assumed.** Stage win rates and stall thresholds come from this
+  agency's own closed deals, and fall back to documented defaults only while the
+  sample is too thin to support one. Stage dwell counts completed passes only —
+  a deal that entered negotiation this morning is not a zero-day negotiation.
+- **The ranking explains itself.** Every point the triage score adds comes back
+  out as a sentence, because a queue order nobody can interrogate is a queue
+  order nobody follows.
+
+### Screens
+
+- **Inbox** — the shared queue, ranked by what a slow reply costs: response debt
+  against the account's target, the size of the relationship, whether a live
+  deal is attached, and whether anyone owns it. Folders, search, and filters by
+  who is blocked.
+- **Conversation** — the thread, an SLA statement in plain language, assignment
+  and snooze, and a composer pre-filled with a draft that names the thread and
+  the wait and then stops before promising anything you have not decided.
+- **Pipeline** — the board, weighted by measured win rate, with a 60-day
+  forecast and the deals sitting past their stage's slow quartile.
+- **Accounts** — health read off behaviour rather than typed into a dropdown:
+  response debt, silence measured against what is normal for that tier, on-time
+  history, and renewal proximity.
+- **Pulse** — the state of the shop in one sentence, including how much retained
+  revenue is currently sitting behind a late reply.
+
+### Layout
+
+```
+packages/agency-core   Pure domain logic — no framework, no I/O, 41 tests
+  time.ts              Business-hours arithmetic (the clock everything else uses)
+  sla.ts               Response budgets per tier, breach assessment
+  triage.ts            Inbox ranking, folders, filters
+  pipeline.ts          Measured stage probabilities, dwell, stalls, forecast
+  accounts.ts          Account health, team load, reply drafting
+
+apps/crm               Next.js 16 app on port 3001
+  src/db               Schema, queries and the correspondence simulation
+```
+
+### Commands
+
+| | |
+| --- | --- |
+| `npm run dev:crm` | Start the app (seeds automatically on first run) |
+| `npm run build:crm` | Production build |
+| `npm run seed:crm` | Regenerate the demo agency |
+| `npm test` | Both core test suites |
+
+### Notes on the demo data
+
+The seed simulates correspondence rather than stamping rows with the numbers we
+want to see. Threads are built backwards from a chosen amount of *working* wait
+so the queue lands on a deliberate spread of clear, due-soon and breached; every
+message falls on a real working hour; and the conversation cache is rebuilt from
+the messages afterwards, so the inbox, the SLA figures and the health scores
+agree because they are all reading the same thread.
+
+It is deterministic — the same seed produces the same agency every time.
+
+### Not yet wired
+
+Sending a reply records it on the thread but does not hand it to a mail
+provider; connecting one is a swap of `sendReply` rather than a change to
+anything that reads. Authentication is also out of scope — the signed-in user
+is a setting — but every read path takes the viewer as a parameter rather than
+reaching for a global, so adding real auth is a small change.
