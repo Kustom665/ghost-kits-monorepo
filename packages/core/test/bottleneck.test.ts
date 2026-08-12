@@ -591,6 +591,21 @@ describe('document chase', () => {
     assert.equal(row.total, 1, 'N/A items are not part of the expected set');
   });
 
+  test('counts reminders per client, not per outstanding document', () => {
+    // One email chasing four documents is one reminder, not four.
+    const snap = snapshot({
+      clients: [client('c1')],
+      returns: [ret('r1', 'docs_pending', 20, { clientId: 'c1' })],
+      docRequests: [
+        docReq('d1', 'r1', 'W-2', { remindersSent: 2 }),
+        docReq('d2', 'r1', '1099-INT', { remindersSent: 2 }),
+        docReq('d3', 'r1', 'K-1 (received)', { remindersSent: 2 }),
+        docReq('d4', 'r1', '1098-T Tuition', { remindersSent: 2 }),
+      ],
+    });
+    assert.equal(buildDocChase(snap)[0].remindersSent, 2);
+  });
+
   test('summary counts blocked hours and the never-nudged gap', () => {
     const snap = snapshot({
       clients: [client('c1'), client('c2')],

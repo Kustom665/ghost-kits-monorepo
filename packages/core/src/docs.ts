@@ -167,7 +167,10 @@ export function buildDocChase(snapshot: FirmSnapshot): DocChaseRow[] {
       total: reqs.filter((r) => r.status !== 'not_applicable').length,
       daysWaiting,
       daysSinceLastResponse,
-      remindersSent: pending.reduce((sum, r) => sum + r.remindersSent, 0),
+      // A nudge covers the whole return, so the count is the number of times
+      // we contacted this client — not the sum across every open item, which
+      // would report four reminders for one email about four documents.
+      remindersSent: Math.max(...pending.map((r) => r.remindersSent)),
       temperature: chaseTemperature(daysSinceLastResponse),
       missingDocs: pending.map((r) => r.docType),
       priority,
