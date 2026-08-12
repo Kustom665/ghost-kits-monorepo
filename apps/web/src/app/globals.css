@@ -1,0 +1,98 @@
+@import 'tailwindcss';
+
+/*
+ * A dense, quiet palette. This is a tool people stare at for ten hours a day
+ * in March — saturation is reserved for things that need action.
+ */
+@theme {
+  --color-ink-50: #f6f7f9;
+  --color-ink-100: #eceef2;
+  --color-ink-200: #d5dae2;
+  --color-ink-300: #b0b9c7;
+  --color-ink-400: #7e8ba0;
+  --color-ink-500: #5e6b81;
+  --color-ink-600: #4a5568;
+  --color-ink-700: #3c4555;
+  --color-ink-800: #2a3140;
+  --color-ink-900: #1b202b;
+  --color-ink-950: #12151d;
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+}
+
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --surface-2: #f1f3f7;
+  --border: #dfe3ea;
+  --text: #1b202b;
+  --text-muted: #5e6b81;
+  --text-faint: #8894a7;
+
+  --ok: #0f7b52;
+  --ok-bg: #e6f4ee;
+  --warn: #9a6207;
+  --warn-bg: #fdf3e2;
+  --bad: #b42318;
+  --bad-bg: #fdeceb;
+  --info: #1f5fa9;
+  --info-bg: #e8f0fa;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #12151d;
+    --surface: #1b202b;
+    --surface-2: #232936;
+    --border: #313a4b;
+    --text: #e7eaf0;
+    --text-muted: #9aa6ba;
+    --text-faint: #6f7d93;
+
+    --ok: #4ade80;
+    --ok-bg: #10241a;
+    --warn: #fbbf24;
+    --warn-bg: #2a2110;
+    --bad: #f87171;
+    --bad-bg: #2c1615;
+    --info: #7dd3fc;
+    --info-bg: #10222f;
+  }
+}
+
+html {
+  color-scheme: light dark;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Tabular figures everywhere numbers are compared down a column. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+}
+
+.hairline {
+  border-color: var(--border);
+}
+
+/* Wide tables scroll inside their own container rather than the page. */
+.scroll-x {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+a {
+  color: inherit;
+}
