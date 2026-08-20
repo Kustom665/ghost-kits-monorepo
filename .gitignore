@@ -6,3 +6,12 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .venv/
+
+# JS kits
+.next
+.data
+*.db
+*.db-shm
+*.db-wal
+next-env.d.ts
+tsconfig.tsbuildinfo
