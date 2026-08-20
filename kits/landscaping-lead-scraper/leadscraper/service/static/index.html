@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Leads">
+<title>Lead CRM</title>
+<style>
+  :root {
+    --bg: #101418; --panel: #1a2027; --panel2: #232b34; --line: #2e3944;
+    --text: #e8edf2; --dim: #93a1af; --accent: #4cc38a; --accent-dark: #2f9d68;
+    --warn: #e5a13a; --danger: #e0596b; --blue: #58a6ff;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { background: var(--bg); color: var(--text);
+    font: 16px/1.45 -apple-system, "SF Pro Text", Segoe UI, Roboto, sans-serif;
+    -webkit-text-size-adjust: 100%; }
+  body { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
+
+  header { position: sticky; top: 0; z-index: 5; background: var(--bg);
+    padding: calc(10px + env(safe-area-inset-top)) 16px 10px;
+    display: flex; align-items: baseline; justify-content: space-between;
+    border-bottom: 1px solid var(--line); }
+  header h1 { font-size: 19px; }
+  header .sub { color: var(--dim); font-size: 13px; }
+
+  main { padding: 12px 12px 24px; max-width: 640px; margin: 0 auto; }
+  .view { display: none; } .view.active { display: block; }
+
+  nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 5;
+    display: flex; background: var(--panel); border-top: 1px solid var(--line);
+    padding-bottom: env(safe-area-inset-bottom); }
+  nav button { flex: 1; background: none; border: 0; color: var(--dim);
+    font-size: 12px; padding: 8px 0 6px; cursor: pointer; }
+  nav button .ic { display: block; font-size: 20px; line-height: 1.2; }
+  nav button.active { color: var(--accent); }
+
+  .card { background: var(--panel); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 12px 14px; margin-bottom: 10px; }
+  .card .top { display: flex; gap: 8px; align-items: center; }
+  .card h3 { font-size: 15px; font-weight: 600; flex: 1; min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .badge { font-size: 11px; padding: 2px 8px; border-radius: 99px;
+    border: 1px solid var(--line); color: var(--dim); white-space: nowrap; }
+  .badge.new { color: var(--blue); border-color: var(--blue); }
+  .badge.called { color: var(--dim); }
+  .badge.follow_up { color: var(--warn); border-color: var(--warn); }
+  .badge.won { color: var(--accent); border-color: var(--accent); }
+  .badge.lost { color: var(--danger); border-color: var(--danger); }
+  .meta { color: var(--dim); font-size: 13px; margin-top: 2px;
+    display: flex; gap: 10px; flex-wrap: wrap; }
+  .due { color: var(--warn); font-weight: 600; }
+
+  .detail { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 12px;
+    display: grid; gap: 10px; }
+  .btnrow { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .btn { display: block; text-align: center; padding: 13px 8px; border-radius: 10px;
+    border: 1px solid var(--line); background: var(--panel2); color: var(--text);
+    font-size: 15px; font-weight: 600; text-decoration: none; cursor: pointer; }
+  .btn.call { grid-column: 1 / -1; background: var(--accent-dark);
+    border-color: var(--accent-dark); font-size: 17px; padding: 15px; }
+  .btn.call.nophone { background: var(--panel2); border-color: var(--line);
+    color: var(--dim); font-weight: 400; }
+  .statusrow { display: flex; gap: 6px; flex-wrap: wrap; }
+  .statusrow button { flex: 1; min-width: 64px; padding: 9px 4px; font-size: 13px;
+    border-radius: 8px; border: 1px solid var(--line); background: var(--panel2);
+    color: var(--dim); cursor: pointer; }
+  .statusrow button.on { color: var(--bg); background: var(--accent);
+    border-color: var(--accent); font-weight: 700; }
+  label { font-size: 12px; color: var(--dim); display: block; margin-bottom: 4px; }
+  input, textarea, select { width: 100%; background: var(--panel2); color: var(--text);
+    border: 1px solid var(--line); border-radius: 8px; padding: 10px; font-size: 16px; }
+  textarea { min-height: 64px; resize: vertical; }
+  .script { background: var(--panel2); border: 1px dashed var(--line);
+    border-radius: 8px; padding: 10px; font-size: 14px; color: var(--dim); }
+  .script b { color: var(--text); display: block; margin-bottom: 4px; font-size: 12px;
+    text-transform: uppercase; letter-spacing: .04em; }
+  .copybtn { margin-top: 8px; font-size: 13px; padding: 8px 12px; border-radius: 8px;
+    border: 1px solid var(--line); background: var(--panel); color: var(--blue); cursor: pointer; }
+
+  .chips { display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 10px;
+    -webkit-overflow-scrolling: touch; }
+  .chips button { padding: 7px 14px; border-radius: 99px; white-space: nowrap;
+    border: 1px solid var(--line); background: var(--panel); color: var(--dim);
+    font-size: 13px; cursor: pointer; }
+  .chips button.on { background: var(--accent); border-color: var(--accent);
+    color: var(--bg); font-weight: 700; }
+
+  .empty { text-align: center; color: var(--dim); padding: 40px 16px; }
+  .srcrow { display: flex; justify-content: space-between; padding: 8px 0;
+    border-bottom: 1px solid var(--line); font-size: 14px; }
+  .srcrow:last-child { border-bottom: 0; }
+  .srcwarn { color: var(--warn); font-size: 12px; padding: 2px 0 6px; }
+  .srcerr { color: var(--danger); font-size: 12px; padding: 2px 0 6px; }
+  .statgrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 14px; }
+  .stat { background: var(--panel); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 12px; }
+  .stat .n { font-size: 22px; font-weight: 700; }
+  .stat .l { font-size: 12px; color: var(--dim); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); }
+  th { color: var(--dim); font-weight: 500; font-size: 12px; }
+  td.num, th.num { text-align: right; }
+
+  .toast { position: fixed; left: 50%; transform: translateX(-50%);
+    bottom: calc(76px + env(safe-area-inset-bottom)); background: var(--panel2);
+    border: 1px solid var(--line); color: var(--text); padding: 10px 18px;
+    border-radius: 99px; font-size: 14px; opacity: 0; transition: opacity .25s;
+    pointer-events: none; z-index: 10; }
+  .toast.show { opacity: 1; }
+  .spin { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--dim);
+    border-top-color: var(--accent); border-radius: 50%;
+    animation: spin .8s linear infinite; vertical-align: -2px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .searchbtn { width: 100%; margin-top: 12px; }
+  .cancelbtn { background: none; border: 0; color: var(--danger); font-size: 13px;
+    padding: 8px; cursor: pointer; width: 100%; }
+  .note { color: var(--dim); font-size: 12px; margin-top: 6px; }
+
+  /* ---------- desktop (≥900px): tab bar becomes a sidebar ---------- */
+  @media (min-width: 900px) {
+    body { padding-bottom: 24px; padding-left: 220px; }
+    nav { top: 0; right: auto; width: 220px; flex-direction: column;
+      justify-content: flex-start; gap: 2px; padding: 18px 10px 0;
+      border-top: 0; border-right: 1px solid var(--line); }
+    nav::before { content: "Lead CRM"; display: block; padding: 4px 14px 16px;
+      font-size: 17px; font-weight: 700; color: var(--text); }
+    nav button { flex: 0 0 auto; display: flex; align-items: center; gap: 12px;
+      font-size: 15px; padding: 11px 14px; border-radius: 10px; text-align: left; }
+    nav button .ic { display: inline; font-size: 18px; line-height: 1; }
+    nav button.active { background: var(--panel2); }
+    nav button:hover { color: var(--text); background: var(--panel2); }
+    header { padding-left: 24px; padding-right: 24px; }
+    main { max-width: 860px; margin: 0; padding: 16px 24px 40px; }
+    .card { padding: 14px 18px; }
+    .card:hover { border-color: var(--dim); }
+    .btn:hover { border-color: var(--dim); }
+    .btn.call:hover { filter: brightness(1.1); }
+    .chips button:hover:not(.on) { color: var(--text); }
+    .statusrow button:hover:not(.on) { color: var(--text); }
+    .statgrid { grid-template-columns: repeat(4, 1fr); }
+    .btnrow { grid-template-columns: repeat(3, 1fr); }
+    #view-search > .card { max-width: 560px; }
+    .toast { bottom: 40px; left: calc(50% + 110px); }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="hdr-title">Today</h1>
+  <span class="sub" id="hdr-sub"></span>
+</header>
+
+<main>
+  <!-- TODAY / ALL -->
+  <section class="view active" id="view-leads">
+    <div class="chips" id="filter-chips">
+      <button data-f="today" class="on">Today</button>
+      <button data-f="new">New</button>
+      <button data-f="follow_up">Follow-ups</button>
+      <button data-f="called">Called</button>
+      <button data-f="won">Won</button>
+      <button data-f="all">All</button>
+    </div>
+    <div id="lead-list"></div>
+  </section>
+
+  <!-- SEARCH -->
+  <section class="view" id="view-search">
+    <div class="card">
+      <div style="display:grid;gap:10px">
+        <div><label>City</label><input id="s-city" placeholder="austin" autocapitalize="none"></div>
+        <div><label>State</label><input id="s-state" placeholder="texas" autocapitalize="none"></div>
+        <div><label>Max leads per source</label><input id="s-max" type="number" value="50" min="1" max="200"></div>
+        <button class="btn call searchbtn" id="s-go">Find new leads</button>
+        <div class="note">Craigslist "wanted" ads + Google property managers. Takes a minute or two — leave this open.</div>
+      </div>
+    </div>
+    <div class="card" id="job-card" style="display:none">
+      <div class="top"><h3 id="job-title">Searching…</h3><span id="job-spin" class="spin"></span></div>
+      <div id="job-sources"></div>
+      <button class="cancelbtn" id="job-cancel" style="display:none">Stop (finishes current source first)</button>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <section class="view" id="view-stats">
+    <div class="statgrid" id="stat-tiles"></div>
+    <div class="card">
+      <table id="stat-table">
+        <thead><tr><th>Source</th><th class="num">Leads</th><th class="num">Contacted</th><th class="num">Won</th><th class="num">Win %</th><th class="num">Revenue</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="note">Win rate = won ÷ contacted, from your own calls — not a brochure number. Mark jobs won (with a $ value) to build this up.</div>
+    <a class="btn" style="margin-top:12px" id="csv-link" href="#">Download CSV</a>
+  </section>
+</main>
+
+<nav>
+  <button data-v="leads" class="active"><span class="ic">☎︎</span>Leads</button>
+  <button data-v="search"><span class="ic">⌕</span>Search</button>
+  <button data-v="stats"><span class="ic">▤</span>Stats</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+
+/* ------------------------------------------------ token bootstrap */
+const params = new URLSearchParams(location.search);
+if (params.get("token")) {
+  localStorage.setItem("token", params.get("token"));
+  history.replaceState(null, "", location.pathname); // keep it out of the URL bar
+}
+const TOKEN = localStorage.getItem("token") || "";
+
+async function api(path, opts = {}) {
+  const resp = await fetch(path, {
+    ...opts,
+    headers: { "Authorization": "Bearer " + TOKEN,
+               "Content-Type": "application/json", ...(opts.headers || {}) },
+  });
+  if (resp.status === 401) { toast("Bad token — reopen the link from the server banner"); throw new Error("401"); }
+  if (!resp.ok && resp.status !== 409) throw new Error("HTTP " + resp.status);
+  return resp.json();
+}
+
+/* ------------------------------------------------ tiny helpers */
+const $ = (sel) => document.querySelector(sel);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) =>
+  ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+let toastTimer;
+function toast(msg) {
+  const el = $("#toast"); el.textContent = msg; el.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove("show"), 2200);
+}
+// Local calendar date, NOT toISOString(): UTC serialization is already
+// "tomorrow" during the evening in timezones behind UTC, which would mark
+// follow-ups due a day early.
+const today = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+const money = (n) => "$" + Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 });
+
+/* ------------------------------------------------ outreach scripts */
+const SCRIPTS = {
+  "Craigslist": { label: "Reply to the ad",
+    text: "Hi! I do lawn & landscaping work here in town and have an opening this week. " +
+          "For a yard like yours I'd estimate $XX per visit. I'm insured, reliable, and can start tomorrow — " +
+          "happy to swing by for a free 5-minute quote. — [Your name], [Your number]" },
+  "Google Places": { label: "Cold-call opener (property manager)",
+    text: "Hi, this is [Name] with [Company] — a local lawn & landscape crew. We work with property managers " +
+          "on multi-property routes: one invoice, photo check-ins after every visit, and a volume rate when we " +
+          "handle 5+ properties. Who handles your landscaping vendor list? I'd love to send a one-page quote." },
+  "Google Search": { label: "Cold-call opener (property manager)",
+    text: "Hi, this is [Name] with [Company] — a local lawn & landscape crew. We work with property managers " +
+          "on multi-property routes: one invoice, photo check-ins after every visit, and a volume rate when we " +
+          "handle 5+ properties. Who handles your landscaping vendor list? I'd love to send a one-page quote." },
+  "Facebook": { label: "Comment / DM (speed wins)",
+    text: "Hey! Local landscaper here — I can take care of this for you. Free quote, can come by today or " +
+          "tomorrow. Just sent you a DM 👍" },
+};
+
+/* ------------------------------------------------ state */
+let leads = [];
+let filter = "today";
+let openKey = null;
+let pollTimer = null;
+
+/* ------------------------------------------------ views */
+document.querySelectorAll("nav button").forEach((b) => b.addEventListener("click", () => {
+  document.querySelectorAll("nav button").forEach((x) => x.classList.toggle("active", x === b));
+  document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
+  $("#view-" + b.dataset.v).classList.add("active");
+  $("#hdr-title").textContent = { leads: filter === "today" ? "Today" : "Leads",
+                                  search: "Find leads", stats: "Your numbers" }[b.dataset.v];
+  if (b.dataset.v === "stats") loadStats();
+  if (b.dataset.v === "leads") loadLeads();
+}));
+
+$("#filter-chips").addEventListener("click", (e) => {
+  if (e.target.tagName !== "BUTTON") return;
+  filter = e.target.dataset.f;
+  document.querySelectorAll("#filter-chips button").forEach((x) =>
+    x.classList.toggle("on", x === e.target));
+  $("#hdr-title").textContent = filter === "today" ? "Today" : "Leads";
+  render();
+});
+
+/* ------------------------------------------------ leads */
+async function loadLeads() {
+  try {
+    const data = await api("/api/leads?limit=500");
+    leads = data.leads;
+    $("#hdr-sub").textContent = data.total + " leads";
+    render();
+  } catch (e) { /* toast already shown on 401 */ }
+}
+
+function visible() {
+  if (filter === "all") return leads;
+  if (filter === "today") {
+    const due = leads.filter((l) => l.status === "follow_up" && l.next_action && l.next_action <= today());
+    const fresh = leads.filter((l) => l.status === "new" && l.phone);
+    const rest = leads.filter((l) => !due.includes(l) && !fresh.includes(l) &&
+                                     (l.status === "new" || l.status === "follow_up"));
+    return [...due, ...fresh, ...rest];
+  }
+  return leads.filter((l) => l.status === filter);
+}
+
+function render() {
+  const list = $("#lead-list");
+  const rows = visible();
+  if (!rows.length) {
+    list.innerHTML = '<div class="empty">Nothing here yet.<br>Run a search from the ⌕ tab.</div>';
+    return;
+  }
+  list.innerHTML = rows.map((l) => {
+    const overdue = l.status === "follow_up" && l.next_action && l.next_action <= today();
+    const open = l.key === openKey;
+    return `
+    <div class="card" data-key="${esc(l.key)}">
+      <div class="top" data-toggle="1">
+        <h3>${esc(l.title)}</h3>
+        <span class="badge ${esc(l.status)}">${esc(l.status.replace("_", "-"))}</span>
+      </div>
+      <div class="meta">
+        <span>${esc(l.source)}</span>
+        ${l.phone ? `<span>${esc(l.phone)}</span>` : "<span>no phone</span>"}
+        ${overdue ? `<span class="due">follow up ${esc(l.next_action)}</span>`
+                  : (l.next_action ? `<span>next: ${esc(l.next_action)}</span>` : "")}
+        ${l.job_value ? `<span>${money(l.job_value)}</span>` : ""}
+      </div>
+      ${open ? detailHTML(l) : ""}
+    </div>`;
+  }).join("");
+}
+
+function detailHTML(l) {
+  const digits = (l.phone || "").replace(/\D/g, "");
+  const script = SCRIPTS[l.source];
+  return `
+  <div class="detail">
+    ${digits
+      ? `<a class="btn call" href="tel:${digits}" data-called="1">📞 Call ${esc(l.phone)}</a>`
+      : `<span class="btn call nophone">No phone — use the listing link</span>`}
+    <div class="btnrow">
+      ${l.url ? `<a class="btn" href="${esc(l.url)}" target="_blank" rel="noopener">Open listing</a>` : ""}
+      ${l.email ? `<a class="btn" href="mailto:${esc(l.email)}">Email</a>` : ""}
+    </div>
+    <div>
+      <label>Status</label>
+      <div class="statusrow">
+        ${["new", "called", "follow_up", "won", "lost"].map((s) =>
+          `<button data-status="${s}" class="${l.status === s ? "on" : ""}">${s.replace("_", "-")}</button>`).join("")}
+      </div>
+    </div>
+    <div><label>Follow up on</label>
+      <input type="date" data-field="next_action" value="${esc(l.next_action || "")}"></div>
+    ${l.status === "won" ? `
+    <div><label>Job value ($)</label>
+      <input type="number" inputmode="decimal" data-field="job_value" value="${l.job_value ?? ""}" placeholder="300"></div>` : ""}
+    <div><label>Notes</label>
+      <textarea data-field="user_notes" placeholder="gate code, quote given, callback time…">${esc(l.user_notes)}</textarea></div>
+    ${script ? `
+    <div class="script"><b>${esc(script.label)}</b>${esc(script.text)}
+      <br><button class="copybtn" data-copy="1">Copy script</button></div>` : ""}
+    ${l.notes ? `<div class="note">From the ad: ${esc(l.notes.slice(0, 240))}</div>` : ""}
+  </div>`;
+}
+
+async function patch(key, fields) {
+  try {
+    const updated = await api("/api/leads", { method: "PATCH", body: JSON.stringify({ key, ...fields }) });
+    const i = leads.findIndex((l) => l.key === key);
+    if (i >= 0) leads[i] = updated;
+    return updated;
+  } catch (e) { toast("Couldn't save — check connection"); throw e; }
+}
+
+$("#lead-list").addEventListener("click", async (e) => {
+  const card = e.target.closest(".card"); if (!card) return;
+  const key = card.dataset.key;
+
+  if (e.target.closest("[data-toggle]")) {
+    openKey = openKey === key ? null : key; render(); return;
+  }
+  if (e.target.closest("[data-called]")) {
+    // let tel: fire, and optimistically mark it called — the status row is the undo
+    const lead = leads.find((l) => l.key === key);
+    if (lead && lead.status === "new") { patch(key, { status: "called" }).then(render).catch(() => {}); }
+    return;
+  }
+  if (e.target.dataset.status) {
+    await patch(key, { status: e.target.dataset.status });
+    render(); toast("Saved");
+    return;
+  }
+  if (e.target.closest("[data-copy]")) {
+    const lead = leads.find((l) => l.key === key);
+    const s = SCRIPTS[lead.source];
+    try { await navigator.clipboard.writeText(s.text); toast("Script copied"); }
+    catch { toast("Copy blocked — long-press the text instead"); }
+  }
+});
+
+$("#lead-list").addEventListener("change", async (e) => {
+  const card = e.target.closest(".card"); if (!card || !e.target.dataset.field) return;
+  const field = e.target.dataset.field;
+  const value = field === "job_value" ? (parseFloat(e.target.value) || 0) : e.target.value;
+  await patch(card.dataset.key, { [field]: value });
+  toast("Saved"); render();
+});
+
+/* ------------------------------------------------ search */
+$("#s-go").addEventListener("click", async () => {
+  const city = $("#s-city").value.trim();
+  if (!city) { toast("Enter a city"); return; }
+  localStorage.setItem("city", city);
+  localStorage.setItem("state", $("#s-state").value.trim());
+  try {
+    const resp = await api("/api/searches", {
+      method: "POST",
+      body: JSON.stringify({ city, state: $("#s-state").value.trim(),
+                             max_per_source: parseInt($("#s-max").value) || 50 }),
+    });
+    pollJob(resp.job_id);
+  } catch (e) { toast("Couldn't start search"); }
+});
+
+function pollJob(jobId) {
+  $("#job-card").style.display = "";
+  $("#job-cancel").style.display = "";
+  $("#job-cancel").onclick = () => api(`/api/searches/${jobId}/cancel`, { method: "POST" })
+    .then(() => toast("Stopping after current source…"));
+  clearInterval(pollTimer);
+  pollTimer = setInterval(async () => {
+    try {
+      const job = await api(`/api/searches/${jobId}`);
+      $("#job-title").textContent =
+        job.status === "running" ? (job.phase || "Searching…") :
+        job.status === "queued" ? "Waiting to start…" : `Search ${job.status}`;
+      $("#job-sources").innerHTML = (job.sources || []).map((s) => `
+        <div class="srcrow"><span>${esc(s.name)}</span>
+          <span>${s.ok ? s.count + " leads" : "failed"}</span></div>
+        ${(s.warnings || []).map((w) => `<div class="srcwarn">⚠ ${esc(w)}</div>`).join("")}
+        ${s.error ? `<div class="srcerr">${esc(s.error)}</div>` : ""}`).join("");
+      if (["done", "error", "cancelled"].includes(job.status)) {
+        clearInterval(pollTimer);
+        $("#job-spin").style.display = "none";
+        $("#job-cancel").style.display = "none";
+        if (job.status === "done") {
+          toast(`${job.new_count} new lead${job.new_count === 1 ? "" : "s"}`);
+          loadLeads();
+        } else if (job.status === "error") { toast("Search failed: " + job.error); }
+      } else { $("#job-spin").style.display = ""; }
+    } catch (e) { /* transient; keep polling */ }
+  }, 2000);
+}
+
+/* ------------------------------------------------ stats */
+async function loadStats() {
+  try {
+    const s = await api("/api/stats");
+    $("#stat-tiles").innerHTML = `
+      <div class="stat"><div class="n">${s.totals.leads}</div><div class="l">Leads found</div></div>
+      <div class="stat"><div class="n">${s.totals.contacted}</div><div class="l">Contacted</div></div>
+      <div class="stat"><div class="n">${s.totals.won}</div><div class="l">Jobs won</div></div>
+      <div class="stat"><div class="n">${money(s.totals.revenue)}</div><div class="l">Revenue</div></div>`;
+    $("#stat-table tbody").innerHTML = s.sources.map((r) => `
+      <tr><td>${esc(r.source)}</td><td class="num">${r.leads}</td>
+        <td class="num">${r.contacted}</td><td class="num">${r.won}</td>
+        <td class="num">${r.win_rate == null ? "—" : Math.round(r.win_rate * 100) + "%"}</td>
+        <td class="num">${money(r.revenue)}</td></tr>`).join("") ||
+      '<tr><td colspan="6" style="color:var(--dim)">No data yet</td></tr>';
+  } catch (e) {}
+}
+
+$("#csv-link").addEventListener("click", async (e) => {
+  e.preventDefault();
+  try {
+    const resp = await fetch("/api/leads.csv", { headers: { "Authorization": "Bearer " + TOKEN } });
+    const blob = await resp.blob();
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = "leads.csv"; a.click();
+    URL.revokeObjectURL(a.href);
+  } catch { toast("Export failed"); }
+});
+
+/* ------------------------------------------------ boot */
+$("#s-city").value = localStorage.getItem("city") || "";
+$("#s-state").value = localStorage.getItem("state") || "";
+loadLeads();
+</script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+{
+  "skill_name": "lead-kit-builder",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I run a pressure washing business in Tampa. Build me something that finds people who need driveways/houses washed so I can call them. I want to work the list from my phone.",
+      "expected_output": "A pressure-washing kit adapted from kits/landscaping-lead-scraper: trade keywords swapped in craigslist/facebook sources, Places queries adjusted, outreach scripts rewritten for pressure washing, phone CRM working, tests green. No invented close rates anywhere.",
+      "assertions": [
+        "Craigslist source uses the RSS feed (format=rss), not li.result-row HTML selectors",
+        "Keywords/queries mention pressure washing terms, not landscaping ones",
+        "SQLite upsert preserves status/user_notes on re-scrape (test exists and passes)",
+        "No conversion-rate or revenue projections appear in README or UI",
+        "Full pytest suite passes without network access"
+      ],
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "here's my python scraper for finding junk removal jobs [pastes script with BeautifulSoup selectors for craigslist search pages and googlesearch package]. can you get this working and add the facebook part too?",
+      "expected_output": "Recognition that the pasted selectors are dead (client-side rendering) and googlesearch rate-limits; a rework using RSS + Places API rather than a transcription; Facebook kept opt-in CLI-only with ToS caveats documented.",
+      "assertions": [
+        "Response identifies that the pasted approach returns no data today, with specific reasons",
+        "Facebook is not exposed over any HTTP API surface",
+        "Google Places API key is read from server environment, never accepted over HTTP",
+        "Craigslist categories are validated against ^[a-z]{3}$ at the API boundary"
+      ],
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "adapt the landscaping kit for my cleaning business in Denver, and set it up so new leads show up every morning",
+      "expected_output": "Adaptation path (copy + keyword/query/script swap, not a rebuild), with --every scheduling documented and the state-survives-rescrape invariant intact.",
+      "assertions": [
+        "Kit reuses the pipeline/store/service architecture unchanged (adaptation, not rewrite)",
+        "Scheduled re-scrape (--every or cron) is configured or documented",
+        "Cleaning-specific keywords and outreach scripts are present"
+      ],
+      "files": []
+    }
+  ]
+}

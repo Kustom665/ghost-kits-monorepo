@@ -1,0 +1,7 @@
+# Extras for the phone CRM service (the CLI needs only requirements.txt)
+fastapi>=0.110
+uvicorn[standard]>=0.27
+httpx>=0.27
+
+# Optional: scannable QR code in the startup banner
+# qrcode>=7.4
