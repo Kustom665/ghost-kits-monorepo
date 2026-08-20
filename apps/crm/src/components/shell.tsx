@@ -5,6 +5,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import type { ReactNode } from 'react';
 import type { FolderCounts } from '@agency/core';
 import { Avatar } from './ui.tsx';
+import { LiveIndicator } from './live.tsx';
 
 /**
  * The navigation rail. It is a client component only because the active state
@@ -159,14 +160,17 @@ export function Rail({
         </nav>
       </div>
 
-      <div className="panel-2 mt-auto flex items-center gap-3 p-3">
-        <Avatar name={viewerName} id={viewerId} size={34} />
-        <span className="min-w-0">
-          <span className="block truncate text-xs font-semibold">{viewerName}</span>
-          <span className="block truncate text-[11px] capitalize" style={{ color: 'var(--text-faint)' }}>
-            {viewerRole.replace('_', ' ')}
+      <div className="mt-auto flex flex-col gap-2">
+        <LiveIndicator />
+        <div className="panel-2 flex items-center gap-3 p-3">
+          <Avatar name={viewerName} id={viewerId} size={34} />
+          <span className="min-w-0">
+            <span className="block truncate text-xs font-semibold">{viewerName}</span>
+            <span className="block truncate text-[11px] capitalize" style={{ color: 'var(--text-faint)' }}>
+              {viewerRole.replace('_', ' ')}
+            </span>
           </span>
-        </span>
+        </div>
       </div>
     </aside>
   );

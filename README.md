@@ -183,6 +183,32 @@ the conversation, so the inbox cannot drift away from the actual correspondence.
   out as a sentence, because a queue order nobody can interrogate is a queue
   order nobody follows.
 
+### Live updates
+
+A shared inbox is the one screen where a stale page is actively harmful — two
+people answer the same client because neither could see the other pick it up. So
+the app runs behind a small custom server (`server.mjs`) that mounts Next inside
+a plain Node HTTP server and holds a WebSocket open on `/ws`.
+
+The socket carries **notifications, not data**: a frame saying "conversation
+cv_84 changed", after which the browser re-requests the server-rendered page.
+Mirroring conversations into a client-side store would mean a second
+implementation of the ranking and the SLA clock, free to disagree with the first;
+this way there is still exactly one, on the server.
+
+- Replies, assignment, snooze, close and deal moves all broadcast.
+- The rail shows connection state and how many tabs are attached.
+- A disconnected tab backs off and retries, and re-reads on reconnect — whatever
+  changed while it was away is invisible until it asks.
+- Open pages also re-render once a minute while visible, because the clocks on
+  screen are relative and have to move on their own.
+
+The bus is a single-process `EventEmitter` on `globalThis` (the custom server and
+the app's server actions share a process but not a module registry). That is
+right for one shop on one server, and it is the piece to swap for Redis pub/sub
+the day it runs on more than one instance — the publish/subscribe shape does not
+change.
+
 ### Screens
 
 - **Inbox** — the shared queue, ranked by what a slow reply costs: response debt
@@ -218,10 +244,17 @@ apps/crm               Next.js 16 app on port 3001
 
 | | |
 | --- | --- |
-| `npm run dev:crm` | Start the app (seeds automatically on first run) |
+| `npm run dev:crm` | Start the app with live reload (seeds automatically on first run) |
 | `npm run build:crm` | Production build |
+| `npm run start:crm` | Serve the production build |
 | `npm run seed:crm` | Regenerate the demo agency |
 | `npm test` | Both core test suites |
+
+Both `dev:crm` and `start:crm` run `server.mjs`, so the WebSocket is present
+either way. `PORT` overrides the default 3001.
+
+To watch the live layer work, open the app in two windows, reply to a thread in
+one, and leave the other alone — the counts in its rail move on their own.
 
 ### Notes on the demo data
 

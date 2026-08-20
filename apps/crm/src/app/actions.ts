@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { ALL_STAGES, type DealStage } from '@agency/core';
+import { publish } from '@/live/bus.ts';
 import {
   assignConversation,
   getViewerId,
@@ -26,11 +27,22 @@ function requireId(formData: FormData, field: string): string {
   return value;
 }
 
-function refreshInbox(conversationId?: string) {
+/**
+ * Every write ends the same way: invalidate this browser's cached routes, then
+ * tell everyone else's browser that something moved. The socket carries the
+ * notification only — each client re-renders from the server, so there is no
+ * second copy of the ranking logic to drift.
+ */
+function refreshInbox(
+  conversationId: string | undefined,
+  action: 'reply' | 'draft' | 'assign' | 'state',
+) {
   revalidatePath('/');
   revalidatePath('/pulse');
   revalidatePath('/accounts');
   if (conversationId) revalidatePath(`/conversations/${conversationId}`);
+
+  publish({ type: 'conversation', conversationId: conversationId ?? '', action });
 }
 
 export async function assignConversationAction(formData: FormData) {
@@ -40,7 +52,7 @@ export async function assignConversationAction(formData: FormData) {
   const assigneeId = raw === '' ? null : raw === 'me' ? getViewerId() : raw;
 
   assignConversation(conversationId, assigneeId);
-  refreshInbox(conversationId);
+  refreshInbox(conversationId, 'assign');
 }
 
 export async function setConversationStateAction(formData: FormData) {
@@ -56,7 +68,7 @@ export async function setConversationStateAction(formData: FormData) {
   }
 
   setConversationState(conversationId, state, snoozedUntil);
-  refreshInbox(conversationId);
+  refreshInbox(conversationId, 'state');
 }
 
 export async function saveDraftAction(formData: FormData) {
@@ -64,7 +76,7 @@ export async function saveDraftAction(formData: FormData) {
   const body = String(formData.get('body') ?? '').slice(0, 8000);
 
   saveDraft(conversationId, body, getViewerId());
-  refreshInbox(conversationId);
+  refreshInbox(conversationId, 'draft');
 }
 
 export async function sendReplyAction(formData: FormData) {
@@ -73,7 +85,7 @@ export async function sendReplyAction(formData: FormData) {
   if (!body) throw new Error('Cannot send an empty reply');
 
   sendReply(conversationId, body, getViewerId());
-  refreshInbox(conversationId);
+  refreshInbox(conversationId, 'reply');
 }
 
 export async function moveDealStageAction(formData: FormData) {
@@ -85,10 +97,12 @@ export async function moveDealStageAction(formData: FormData) {
   revalidatePath('/pipeline');
   revalidatePath('/pulse');
   revalidatePath('/accounts');
+  publish({ type: 'deal', dealId, action: 'stage' });
 }
 
 /** Regenerate the demo agency. Destructive, and only meant for the sample data. */
 export async function reseedAction() {
   reseed();
   revalidatePath('/', 'layout');
+  publish({ type: 'reseed' });
 }
