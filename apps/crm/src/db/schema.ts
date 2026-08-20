@@ -83,6 +83,7 @@ CREATE TABLE IF NOT EXISTS conversations (
   last_message_at  TEXT NOT NULL,
   last_inbound_at  TEXT,
   last_outbound_at TEXT,
+  first_inbound_at TEXT,
   first_response_at TEXT,
   waiting_on       TEXT NOT NULL,
   snoozed_until    TEXT,

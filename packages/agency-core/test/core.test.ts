@@ -87,6 +87,7 @@ function conversation(over: Partial<Conversation> = {}): Conversation {
     lastMessageAt: FRI_5PM,
     lastInboundAt: FRI_5PM,
     lastOutboundAt: null,
+    firstInboundAt: FRI_5PM,
     firstResponseAt: null,
     waitingOn: 'us',
     snoozedUntil: null,
@@ -265,6 +266,7 @@ describe('response targets', () => {
     const answered = conversation({
       id: 'cv_a',
       openedAt: local('2026-03-05', '10:00'),
+      firstInboundAt: local('2026-03-05', '10:00'),
       firstResponseAt: local('2026-03-05', '13:00'),
       lastOutboundAt: local('2026-03-05', '13:00'),
       messageCount: 2,
@@ -279,12 +281,38 @@ describe('response targets', () => {
     // outbound instead would report this as a nine-day first response.
     const longThread = conversation({
       openedAt: local('2026-03-02', '09:00'),
+      firstInboundAt: local('2026-03-02', '09:00'),
       firstResponseAt: local('2026-03-02', '11:00'),
       lastOutboundAt: local('2026-03-09', '11:00'),
       messageCount: 12,
     });
     assert.equal(firstResponseHours(longThread), 2);
     assert.deepEqual(firstResponseSample([longThread], NOW, 30), [2]);
+  });
+
+  test('an outreach thread is measured from the reply we owed, not from our own opener', () => {
+    // We wrote first on Monday, the prospect answered Thursday, we came back
+    // within the hour. Measuring from the opener would call that three days.
+    const outreach = conversation({
+      openedAt: local('2026-03-02', '09:00'),
+      firstInboundAt: local('2026-03-05', '14:00'),
+      firstResponseAt: local('2026-03-05', '15:00'),
+      lastOutboundAt: local('2026-03-05', '15:00'),
+      messageCount: 3,
+    });
+    assert.equal(firstResponseHours(outreach), 1);
+  });
+
+  test('a thread the client has never written on has no first-response figure', () => {
+    const unanswered = conversation({
+      firstInboundAt: null,
+      firstResponseAt: null,
+      lastInboundAt: null,
+      lastOutboundAt: FRI_5PM,
+      waitingOn: 'them',
+    });
+    assert.equal(firstResponseHours(unanswered), null);
+    assert.deepEqual(firstResponseSample([unanswered], NOW, 30), []);
   });
 });
 

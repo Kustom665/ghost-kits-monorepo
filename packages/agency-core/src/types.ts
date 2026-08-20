@@ -75,10 +75,16 @@ export interface Conversation {
   lastInboundAt: string | null;
   lastOutboundAt: string | null;
   /**
-   * When the first outbound reply landed on this thread. Kept separately from
-   * `lastOutboundAt` because the latest reply on a twelve-message thread says
-   * nothing about how long the client waited to hear from anyone at all — and
-   * that first wait is the number clients actually judge.
+   * When the client first wrote in. Not always `openedAt`: a thread the agency
+   * started as outreach opens with an outbound message, and the client's wait
+   * plainly does not begin before they have said anything.
+   */
+  firstInboundAt: string | null;
+  /**
+   * When the first outbound reply landed *after* that first inbound. Kept
+   * separately from `lastOutboundAt` because the latest reply on a
+   * twelve-message thread says nothing about how long the client waited to hear
+   * from anyone at all — and that first wait is what clients actually judge.
    */
   firstResponseAt: string | null;
   waitingOn: WaitingOn;

@@ -184,17 +184,24 @@ export function summarizeSla(assessments: Iterable<SlaAssessment>): SlaSummary {
 }
 
 /**
- * Working hours between a thread opening and its first reply, or null if it is
+ * Working hours the client waited for the first reply, or null if they are
  * still waiting. Threads still waiting are excluded from every average on
  * purpose: counting "time so far" as a response time drags the number toward
  * zero exactly when the shop is at its slowest.
+ *
+ * Measured from the first *inbound* message rather than from the thread's
+ * first message. On a thread the agency opened as outreach those differ by
+ * however long the prospect took to write back — charging that silence to our
+ * response time would make the fastest replies in the shop look like the
+ * slowest.
  */
 export function firstResponseHours(
   conversation: Conversation,
   week: WorkWeek = DEFAULT_WORK_WEEK,
 ): number | null {
-  if (!conversation.firstResponseAt) return null;
-  return businessHoursBetween(conversation.openedAt, conversation.firstResponseAt, week);
+  const { firstInboundAt, firstResponseAt } = conversation;
+  if (!firstResponseAt || !firstInboundAt) return null;
+  return businessHoursBetween(firstInboundAt, firstResponseAt, week);
 }
 
 /** Measured first-response performance over a trailing window. */

@@ -1023,9 +1023,11 @@ export function refreshConversation(db: DatabaseSync, conversationId: string): v
          MAX(sent_at) FILTER (WHERE is_draft = 0)                                    AS last_at,
          MAX(CASE WHEN direction = 'inbound'  AND is_draft = 0 THEN sent_at END)     AS last_inbound,
          MAX(CASE WHEN direction = 'outbound' AND is_draft = 0 THEN sent_at END)     AS last_outbound,
-         -- The first reply that came after the client's opening message. An
-         -- outbound that predates it is us starting the conversation, which is
-         -- outreach, not a response.
+         -- When the client first wrote in. On an outreach thread this is not
+         -- the first message, and the client's wait does not start before it.
+         MIN(CASE WHEN direction = 'inbound'  AND is_draft = 0 THEN sent_at END)     AS first_inbound,
+         -- The first reply that came after that. An outbound that predates it
+         -- is us starting the conversation, which is outreach, not a response.
          MIN(CASE WHEN direction = 'outbound' AND is_draft = 0
                    AND sent_at > (SELECT MIN(sent_at) FROM messages
                                    WHERE conversation_id = ? AND direction = 'inbound' AND is_draft = 0)
@@ -1039,6 +1041,7 @@ export function refreshConversation(db: DatabaseSync, conversationId: string): v
     last_at: string | null;
     last_inbound: string | null;
     last_outbound: string | null;
+    first_inbound: string | null;
     first_response: string | null;
   };
 
@@ -1060,13 +1063,14 @@ export function refreshConversation(db: DatabaseSync, conversationId: string): v
   db.prepare(
     `UPDATE conversations
         SET opened_at = ?, last_message_at = ?, last_inbound_at = ?, last_outbound_at = ?,
-            first_response_at = ?, waiting_on = ?, message_count = ?, has_draft = ?
+            first_inbound_at = ?, first_response_at = ?, waiting_on = ?, message_count = ?, has_draft = ?
       WHERE id = ?`,
   ).run(
     row.opened_at,
     row.last_at,
     row.last_inbound,
     row.last_outbound,
+    row.first_inbound,
     row.first_response,
     waitingOn,
     row.sent,

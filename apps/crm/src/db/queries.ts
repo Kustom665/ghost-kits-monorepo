@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import type { DatabaseSync } from 'node:sqlite';
 import type {
   Account,
@@ -90,6 +91,7 @@ function toConversation(row: Row): Conversation {
     lastMessageAt: str(row, 'last_message_at'),
     lastInboundAt: nullableStr(row, 'last_inbound_at'),
     lastOutboundAt: nullableStr(row, 'last_outbound_at'),
+    firstInboundAt: nullableStr(row, 'first_inbound_at'),
     firstResponseAt: nullableStr(row, 'first_response_at'),
     waitingOn: str(row, 'waiting_on') as Conversation['waitingOn'],
     snoozedUntil: nullableStr(row, 'snoozed_until'),
@@ -288,15 +290,15 @@ export function sendReply(
     ? (db.prepare('SELECT name FROM team_members WHERE id = ?').get(authorId) as { name: string } | undefined)
     : undefined;
 
-  const count = (
-    db.prepare('SELECT COUNT(*) AS n FROM messages WHERE conversation_id = ?').get(conversationId) as { n: number }
-  ).n;
-
   db.prepare('DELETE FROM messages WHERE conversation_id = ? AND is_draft = 1').run(conversationId);
   db.prepare(
     `INSERT INTO messages (id, conversation_id, direction, author_name, author_id, sent_at, body, is_draft)
      VALUES (?, ?, 'outbound', ?, ?, ?, ?, 0)`,
-  ).run(`msg_${conversationId}_${count}`, conversationId, author?.name ?? 'You', authorId, nowIso, body);
+    // Identity never comes from a row count. Sending a saved draft removes a
+    // row and adds one, so a count-derived id repeats itself on the next reply
+    // and collides. The seed keeps deterministic ids because it needs a
+    // reproducible agency; live writes only need to be unique.
+  ).run(`msg_${randomUUID()}`, conversationId, author?.name ?? 'You', authorId, nowIso, body);
 
   // Replying wakes a snoozed thread — a parked thread you just answered is
   // simply an open thread.
