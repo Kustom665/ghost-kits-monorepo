@@ -31,6 +31,50 @@ def _source_payload(results):
     ]
 
 
+def _classify(outcome):
+    """Decide a job's terminal status.
+
+    A run where every source errored is a failure, not a successful search that
+    happened to find nothing. Reporting it as "done" made a permanently broken
+    scraper indistinguishable from a quiet week - which matters most on the
+    scheduled path, where nobody is watching the UI. Sources skipped by
+    configuration are not attempts and do not count either way.
+    """
+    if outcome.cancelled:
+        return "cancelled", ""
+
+    attempted = outcome.results
+    if attempted and not any(r.ok for r in attempted):
+        detail = "; ".join(f"{r.name}: {r.error}" for r in attempted if r.error)
+        return "error", f"every source failed. {detail}"
+
+    return "done", ""
+
+
+def _log_outcome(job_id, status, error, outcome, new_count):
+    """Leave a trail for headless runs.
+
+    The scheduler logs that it submitted a job but nothing about how it went, so
+    without this a nightly re-scrape that quietly stopped working reads exactly
+    like one that simply found no new work.
+    """
+    if status == "error":
+        log.warning("job %s failed: %s", job_id, error)
+        return
+    if status == "cancelled":
+        log.info("job %s cancelled with %d leads so far", job_id, len(outcome.leads))
+        return
+
+    ok = sum(1 for r in outcome.results if r.ok)
+    log.info(
+        "job %s done: %d leads (%d new) from %d/%d sources",
+        job_id, len(outcome.leads), new_count, ok, len(outcome.results),
+    )
+    for r in outcome.results:
+        if not r.ok:
+            log.warning("job %s: source %s failed - %s", job_id, r.name, r.error)
+
+
 class JobRunner:
     def __init__(self, store, search=run_search, max_seconds: int = JOB_MAX_SECONDS):
         self.store = store
@@ -61,13 +105,16 @@ class JobRunner:
         try:
             outcome = self.search(req, should_cancel=should_cancel, on_source=on_source)
             new_count = store.upsert_leads(outcome.leads, job_id=job_id)
+            status, error = _classify(outcome)
             store.finish_job(
                 job_id,
-                status="cancelled" if outcome.cancelled else "done",
+                status=status,
+                error=error,
                 sources=_source_payload(outcome.results),
                 found=len(outcome.leads),
                 new_count=new_count,
             )
+            _log_outcome(job_id, status, error, outcome, new_count)
         except Exception as exc:  # a stuck 'running' job is the worst failure mode
             log.exception("job %s crashed", job_id)
             store.finish_job(
