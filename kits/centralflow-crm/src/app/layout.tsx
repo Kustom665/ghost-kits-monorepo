@@ -6,8 +6,12 @@ import { Rail } from '@/components/shell.tsx';
 import { getAgencyName, getViewerId, loadSnapshot } from '@/db/queries.ts';
 
 export const metadata: Metadata = {
-  title: 'CentralFlow — agency CRM',
-  description: 'A shared client inbox that ranks itself by what a slow reply actually costs.',
+  title: 'CentralFlow CRM',
+  description: 'Agency CRM built around the shared client inbox, with threads ranked by response cost in working hours, pipeline, and account health.',
+  openGraph: {
+    title: 'CentralFlow CRM',
+    description: 'Agency CRM built around the shared client inbox, with threads ranked by response cost in working hours, pipeline, and account health.',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

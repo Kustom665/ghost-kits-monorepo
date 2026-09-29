@@ -1,0 +1,6 @@
+{
+  "name": "CentralFlow CRM",
+  "description": "Agency CRM built around the shared client inbox, with threads ranked by response cost in working hours, pipeline, and account health.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

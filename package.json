@@ -1,0 +1,15 @@
+{
+  "name": "ghost-kits-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "kits/centralflow-crm"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=kits/centralflow-crm",
+    "build": "npm run build --workspace=kits/centralflow-crm",
+    "start": "npm run start --workspace=kits/centralflow-crm",
+    "lint": "npm run typecheck --workspace=kits/centralflow-crm"
+  }
+}
