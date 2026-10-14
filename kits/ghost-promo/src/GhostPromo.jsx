@@ -19,15 +19,15 @@ export default function GhostPromo() {
 
   useEffect(() => {
     if (paused) return;
+    let t2;
     const t1 = setTimeout(() => {
       setGlitch(true);
-      const t2 = setTimeout(() => {
+      t2 = setTimeout(() => {
         setGlitch(false);
         setBeat(p => (p + 1) % BEATS.length);
       }, 250);
-      return () => clearTimeout(t2);
     }, BEATS[beat].duration);
-    return () => clearTimeout(t1);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [beat, paused]);
 
   useEffect(() => {

@@ -26,9 +26,11 @@ function startServer() {
   });
   return new Promise((resolve, reject) => {
     let out = "";
+    let timer;
     const onData = (d) => {
       out += d.toString();
       if (out.includes("ready in") || out.includes("Local:")) {
+        clearTimeout(timer);
         proc.stdout.off("data", onData);
         resolve(proc);
       }
@@ -36,7 +38,7 @@ function startServer() {
     proc.stdout.on("data", onData);
     proc.stderr.on("data", (d) => (out += d.toString()));
     proc.on("error", reject);
-    setTimeout(() => reject(new Error("vite timed out:\n" + out)), 15000);
+    timer = setTimeout(() => reject(new Error("vite timed out:\n" + out)), 15000);
   });
 }
 
@@ -45,7 +47,13 @@ async function main() {
   if (!cmd) { console.error("Usage: driver.mjs <screenshot|click-dot|click-card> ..."); process.exit(1); }
 
   const server = await startServer();
-  const browser = await chromium.launch();
+  let browser;
+  try {
+    browser = await chromium.launch();
+  } catch (e) {
+    try { process.kill(-server.pid, "SIGKILL"); } catch { server.kill("SIGKILL"); }
+    throw e;
+  }
   try {
     const page = await browser.newPage({ viewport: { width: 480, height: 760 } });
     await page.goto(URL, { waitUntil: "networkidle" });
@@ -65,7 +73,7 @@ async function main() {
       console.log("wrote", out);
     } else if (cmd === "click-card") {
       const out = args[0] || "screenshot.png";
-      await page.locator('[style*="cursor:pointer"]').first().click();
+      await page.locator('[style*="cursor: pointer"]').first().click();
       await page.waitForTimeout(150);
       await page.screenshot({ path: out });
       console.log("wrote", out);
