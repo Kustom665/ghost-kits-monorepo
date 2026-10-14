@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "workspaces": [
-    "kits/centralflow-crm"
+    "kits/centralflow-crm",
+    "kits/ghost-promo"
   ],
   "scripts": {
     "dev": "npm run dev --workspace=kits/centralflow-crm",
